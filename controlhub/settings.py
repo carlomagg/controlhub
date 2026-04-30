@@ -30,20 +30,20 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 # For production, replace '*' with your specific domain/IP
 ALLOWED_HOSTS = ['*']
 
-# Railway deployment settings
-RAILWAY_ENVIRONMENT = os.environ.get('RAILWAY_ENVIRONMENT')
-if RAILWAY_ENVIRONMENT:
-    # Add Railway domain to allowed hosts
-    RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
-    if RAILWAY_PUBLIC_DOMAIN:
-        ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
-    
+# Render deployment settings
+RENDER = os.environ.get('RENDER')
+if RENDER:
     # Security settings for production
-    SECURE_SSL_REDIRECT = False  # Railway handles SSL
+    SECURE_SSL_REDIRECT = False  # Render handles SSL
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Add Render domain to allowed hosts
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
 # Application definition
