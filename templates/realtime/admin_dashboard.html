@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - ControlHub Live{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-shield-check"></i> Admin Dashboard</h2>
+    <div>
+        <span class="badge bg-success">Super Admin</span>
+        <span class="ms-2 text-muted" id="current-time"></span>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card primary">
+            <i class="bi bi-laptop" style="font-size: 2rem;"></i>
+            <h3>{{ total_devices }}</h3>
+            <p class="mb-0">Total Devices</p>
+            <small class="mt-2 d-block">
+                <a href="{% url 'device_list' %}" class="text-white text-decoration-none">
+                    Manage Devices →
+                </a>
+            </small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card success">
+            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+            <h3>{{ online_devices }}</h3>
+            <p class="mb-0">Online Now</p>
+            <small class="mt-2 d-block">Active Connections</small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card danger">
+            <i class="bi bi-people" style="font-size: 2rem;"></i>
+            <h3>{{ total_users }}</h3>
+            <p class="mb-0">Total Users</p>
+            <small class="mt-2 d-block">
+                <a href="{% url 'user_list' %}" class="text-white text-decoration-none">
+                    Manage Users →
+                </a>
+            </small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card info">
+            <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+            <h3>{{ total_messages }}</h3>
+            <p class="mb-0">Messages Sent</p>
+            <small class="mt-2 d-block">Last 24 hours</small>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{% url 'device_create' %}" class="btn btn-primary w-100 btn-lg">
+                            <i class="bi bi-plus-circle"></i><br>
+                            Add Device
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{% url 'user_create' %}" class="btn btn-success w-100 btn-lg">
+                            <i class="bi bi-person-plus"></i><br>
+                            Add User
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{% url 'device_list' %}" class="btn btn-info w-100 btn-lg">
+                            <i class="bi bi-eye"></i><br>
+                            Monitor Devices
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="/admin/" class="btn btn-dark w-100 btn-lg" target="_blank">
+                            <i class="bi bi-gear"></i><br>
+                            Django Admin
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Devices Management -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-laptop"></i> All Devices</h5>
+                <a href="{% url 'device_create' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Device
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>OS</th>
+                                <th>Status</th>
+                                <th>IP Address</th>
+                                <th>Last Seen</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ device.device_name }}</strong>
+                                    {% if device.hostname %}
+                                    <br><small class="text-muted">{{ device.hostname }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ device.operating_system }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ device.status }}">
+                                        <i class="bi bi-circle-fill"></i> {{ device.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ device.ip_address|default:"N/A" }}</td>
+                                <td>{{ device.last_seen|timesince }} ago</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if device.status == 'online' %}
+                                        <a href="{% url 'live_monitor' device.id %}" class="btn btn-primary" title="Monitor">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'device_detail' device.id %}" class="btn btn-info" title="Details">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        <a href="{% url 'send_message' device.id %}" class="btn btn-success" title="Send Message">
+                                            <i class="bi bi-send"></i>
+                                        </a>
+                                        <a href="{% url 'device_delete' device.id %}" class="btn btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-laptop" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">No devices yet</h5>
+                                    <a href="{% url 'device_create' %}" class="btn btn-primary mt-2">
+                                        <i class="bi bi-plus-circle"></i> Add Your First Device
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Management -->
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people"></i> All Users</h5>
+                <a href="{% url 'user_create' %}" class="btn btn-sm btn-success">
+                    <i class="bi bi-person-plus"></i> Add User
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_obj in users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user_obj.username }}</strong>
+                                    {% if user_obj.id == user.id %}
+                                    <span class="badge bg-primary ms-2">You</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user_obj.email|default:"N/A" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if user_obj.role == 'super_admin' %}bg-danger
+                                        {% elif user_obj.role == 'admin' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ user_obj.get_role_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user_obj.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'user_edit' user_obj.id %}" class="btn btn-info" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if user_obj.id != user.id %}
+                                        <a href="{% url 'user_delete' user_obj.id %}" class="btn btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Recent Messages -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Recent Messages</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% for message in recent_messages %}
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>{{ message.device.device_name }}</strong>
+                        <small class="text-muted">{{ message.created_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-1">{{ message.message|truncatewords:15 }}</p>
+                    <small class="text-muted">
+                        From: {{ message.sender.username }}
+                        {% if message.delivered %}
+                        <i class="bi bi-check2-all text-success"></i>
+                        {% endif %}
+                    </small>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted">No messages yet</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> System Info</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Total Devices:</strong> {{ total_devices }}</p>
+                <p><strong>Online:</strong> <span class="text-success">{{ online_devices }}</span></p>
+                <p><strong>Offline:</strong> <span class="text-danger">{{ offline_devices }}</span></p>
+                <p><strong>Total Users:</strong> {{ total_users }}</p>
+                <p><strong>Active Users:</strong> {{ active_users }}</p>
+                <p><strong>Messages Today:</strong> {{ messages_today }}</p>
+                <hr>
+                <p class="mb-0"><strong>Your Role:</strong> 
+                    <span class="badge bg-danger">{{ user.get_role_display }}</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Admin Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="/admin/" target="_blank" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear me-2"></i> Django Admin Panel
+                    </a>
+                    <a href="/admin/accounts/user/" target="_blank" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people me-2"></i> Manage Users (Admin)
+                    </a>
+                    <a href="/admin/devices/device/" target="_blank" class="list-group-item list-group-item-action">
+                        <i class="bi bi-laptop me-2"></i> Manage Devices (Admin)
+                    </a>
+                    <a href="/admin/messaging/message/" target="_blank" class="list-group-item list-group-item-action">
+                        <i class="bi bi-chat-dots me-2"></i> View All Messages (Admin)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon Features -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-star"></i> Coming Soon</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-mouse me-3 text-muted"></i>
+                        <span class="text-muted">Remote Mouse Control</span>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-keyboard me-3 text-muted"></i>
+                        <span class="text-muted">Remote Keyboard</span>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-file-earmark me-3 text-muted"></i>
+                        <span class="text-muted">File Transfer</span>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-terminal me-3 text-muted"></i>
+                        <span class="text-muted">Remote Terminal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+    
+    // Auto-refresh device status
+    function refreshDeviceStatus() {
+        fetch('/devices/api/status/')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats if needed
+                console.log('Device status updated', data);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    setInterval(refreshDeviceStatus, 10000); // Every 10 seconds
+</script>
+{% endblock %}

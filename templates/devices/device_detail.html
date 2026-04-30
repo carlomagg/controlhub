@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ device.device_name }} - ControlHub Live{% endblock %}
+
+{% block extra_css %}
+<style>
+    .setup-step {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .setup-card {
+        border-left: 4px solid #667eea;
+        transition: transform 0.2s;
+    }
+    
+    .setup-card:hover {
+        transform: translateX(5px);
+    }
+    
+    .code-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        position: relative;
+    }
+    
+    .copy-btn-small {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .success-checkmark {
+        color: #28a745;
+        font-size: 1.5rem;
+        display: none;
+    }
+    
+    .token-display {
+        word-break: break-all;
+        background: #fff3cd;
+        padding: 10px;
+        border-radius: 5px;
+        border: 2px dashed #ffc107;
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-laptop"></i> {{ device.device_name }}</h2>
+        <span class="status-badge status-{{ device.status }}">
+            <i class="bi bi-circle-fill"></i> {{ device.status|title }}
+        </span>
+    </div>
+    <div>
+        {% if device.status == 'online' %}
+        <a href="{% url 'live_monitor' device.id %}" class="btn btn-primary">
+            <i class="bi bi-eye"></i> Live Monitor
+        </a>
+        {% endif %}
+        <a href="{% url 'device_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Setup Instructions (Show if device is offline) -->
+{% if device.status == 'offline' %}
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-info-circle me-3" style="font-size: 2rem;"></i>
+        <div>
+            <h5 class="mb-1">Device Not Connected Yet</h5>
+            <p class="mb-0">Follow the setup instructions below to connect this device.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Easy Setup Guide -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="bi bi-rocket-takeoff"></i> Easy Setup Guide - Connect This Device</h4>
+    </div>
+    <div class="card-body">
+        <p class="lead mb-4">Follow these 3 simple steps to start monitoring this device:</p>
+        
+        <!-- Important Note about Server URL -->
+        <div class="alert alert-info mb-4">
+            <h6><i class="bi bi-info-circle"></i> About the Server URL</h6>
+            <p class="mb-2">The server URL shown below (<code>{{ server_url }}</code>) is automatically generated based on how you're accessing this dashboard.</p>
+            <ul class="mb-0">
+                <li>If you see <code>ws://localhost:8000</code> - This only works on this server computer. For other computers, use your server's IP address (e.g., <code>ws://192.168.1.100:8000</code>) or domain.</li>
+                <li>If you see <code>ws://192.168.x.x:8000</code> - This works for computers on your local network.</li>
+                <li>If you see <code>wss://your-domain.com</code> - This works over the internet.</li>
+            </ul>
+        </div>
+        
+        <!-- Step 1: Download Agent -->
+        <div class="card setup-card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <div class="setup-step">1</div>
+                    <div class="flex-grow-1">
+                        <h5>Download the Agent</h5>
+                        <p class="text-muted mb-3">Download the monitoring agent to the computer you want to monitor.</p>
+                        <a href="/static/client_agent.zip" class="btn btn-success btn-lg" download>
+                            <i class="bi bi-download"></i> Download Agent (client_agent.zip)
+                        </a>
+                        <p class="mt-2 mb-0"><small class="text-muted">Extract the ZIP file to any location (e.g., Desktop)</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Copy Token -->
+        <div class="card setup-card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <div class="setup-step">2</div>
+                    <div class="flex-grow-1">
+                        <h5>Copy Your Device Token</h5>
+                        <p class="text-muted mb-3">This unique token connects the agent to this device.</p>
+                        
+                        <div class="token-display mb-3" id="tokenDisplay">
+                            {{ device.unique_token }}
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="copyToken()">
+                            <i class="bi bi-clipboard"></i> Copy Token
+                        </button>
+                        <span class="success-checkmark ms-2" id="copySuccess">
+                            <i class="bi bi-check-circle-fill"></i> Copied!
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Configure & Start -->
+        <div class="card setup-card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <div class="setup-step">3</div>
+                    <div class="flex-grow-1">
+                        <h5>Configure and Start the Agent</h5>
+                        <p class="text-muted">On the computer you want to monitor:</p>
+                        
+                        <div class="mb-3">
+                            <strong>Option A: Automatic Setup (Easiest)</strong>
+                            <ol class="mt-2">
+                                <li>Extract the downloaded ZIP file</li>
+                                <li>Double-click <code>EASY_INSTALL.bat</code></li>
+                                <li>When Notepad opens, paste your token where it says <code>PASTE_TOKEN_HERE</code></li>
+                                <li>Change the server URL to: <code class="token-display d-inline">{{ server_url }}</code>
+                                    <div class="alert alert-warning mt-2 mb-0" style="font-size: 0.9rem;">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <strong>Important:</strong> Use the URL shown above ({{ server_url }}). 
+                                        Do NOT use <code>ws://localhost:8000</code> unless you're testing on this server computer itself!
+                                    </div>
+                                </li>
+                                <li>Save (Ctrl+S) and close Notepad</li>
+                                <li>Double-click <code>START_AGENT.bat</code></li>
+                            </ol>
+                        </div>
+                        
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Done!</strong> Keep the black window open. The device will show as "Online" here within 5 seconds.
+                        </div>
+                        
+                        <hr>
+                        
+                        <details>
+                            <summary class="btn btn-link p-0"><strong>Option B: Manual Setup</strong> (for advanced users)</summary>
+                            <div class="mt-3">
+                                <p>Edit <code>agent_config.json</code> manually:</p>
+                                <div class="code-box">
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn-small" onclick="copyConfig()">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                    <pre class="mb-0" id="configCode">{
+    "server_url": "{{ server_url }}",
+    "device_token": "{{ device.unique_token }}",
+    "device_name": "{{ device.device_name }}",
+    "capture_interval": 0.5,
+    "jpeg_quality": 60,
+    "screen_width": 1280
+}</pre>
+                                </div>
+                                <p class="mt-3">Then run:</p>
+                                <div class="code-box">
+                                    <code>python agent.py</code>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Reference -->
+        <div class="alert alert-light border">
+            <h6><i class="bi bi-bookmark"></i> Quick Reference</h6>
+            <ul class="mb-0">
+                <li><strong>Server URL:</strong> <code>{{ server_url }}</code>
+                    <br><small class="text-muted">⚠️ This is the URL where your ControlHub is hosted. Use this exact URL in the agent configuration.</small>
+                </li>
+                <li><strong>Device Name:</strong> {{ device.device_name }}</li>
+                <li><strong>Operating System:</strong> {{ device.operating_system }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Device Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Device Name:</strong> {{ device.device_name }}</p>
+                        <p><strong>Operating System:</strong> {{ device.operating_system }}</p>
+                        <p><strong>Hostname:</strong> {{ device.hostname|default:"N/A" }}</p>
+                        <p><strong>IP Address:</strong> {{ device.ip_address|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>CPU:</strong> {{ device.cpu_info|default:"N/A" }}</p>
+                        <p><strong>RAM:</strong> {{ device.ram_total|default:"N/A" }}</p>
+                        <p><strong>Screen Resolution:</strong> {{ device.screen_resolution|default:"N/A" }}</p>
+                        <p><strong>Last Seen:</strong> {{ device.last_seen|timesince }} ago</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-key"></i> Connection Token</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Keep this token secure!</strong> Anyone with this token can connect as this device.
+                </div>
+                <div class="input-group">
+                    <input type="text" class="form-control font-monospace" id="token" value="{{ device.unique_token }}" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyTokenSimple()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Recent Messages</h5>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% for msg in messages %}
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>{{ msg.sender.username }}</strong>
+                        <small class="text-muted">{{ msg.created_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-1">{{ msg.message }}</p>
+                    {% if msg.delivered %}
+                    <small class="text-success"><i class="bi bi-check2-all"></i> Delivered</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-center text-muted">No messages yet</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'send_message' device.id %}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-send"></i> Send Message
+                </a>
+                <a href="{% url 'device_delete' device.id %}" class="btn btn-danger w-100">
+                    <i class="bi bi-trash"></i> Delete Device
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToken() {
+    const tokenText = document.getElementById('tokenDisplay').textContent.trim();
+    navigator.clipboard.writeText(tokenText).then(() => {
+        const successMsg = document.getElementById('copySuccess');
+        successMsg.style.display = 'inline';
+        setTimeout(() => {
+            successMsg.style.display = 'none';
+        }, 3000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = tokenText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Token copied to clipboard!');
+    });
+}
+
+function copyTokenSimple() {
+    const tokenInput = document.getElementById('token');
+    tokenInput.select();
+    navigator.clipboard.writeText(tokenInput.value).then(() => {
+        alert('Token copied to clipboard!');
+    }).catch(() => {
+        document.execCommand('copy');
+        alert('Token copied to clipboard!');
+    });
+}
+
+function copyConfig() {
+    const configText = document.getElementById('configCode').textContent;
+    navigator.clipboard.writeText(configText).then(() => {
+        alert('Configuration copied to clipboard!');
+    }).catch(() => {
+        alert('Please copy manually');
+    });
+}
+
+// Auto-refresh device status
+setInterval(() => {
+    location.reload();
+}, 30000); // Refresh every 30 seconds to check if device comes online
+</script>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Monitor - {{ device.device_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .monitor-container {
+        background: #000;
+        border-radius: 10px;
+        padding: 20px;
+        position: relative;
+    }
+    
+    .screen-frame {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+        background: #1a1a1a;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .screen-frame img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 5px;
+    }
+    
+    .connection-status {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 500;
+        z-index: 10;
+    }
+    
+    .fullscreen-btn {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        z-index: 10;
+    }
+    
+    .message-panel {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .message-item {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    
+    .no-stream {
+        color: #6c757d;
+        text-align: center;
+        padding: 100px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-display"></i> Live Monitor</h2>
+        <p class="text-muted mb-0">{{ device.device_name }} - {{ device.operating_system }}</p>
+    </div>
+    <a href="{% url 'device_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Devices
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="monitor-container">
+                    <span id="connection-status" class="connection-status bg-warning text-dark">
+                        <i class="bi bi-circle-fill"></i> Connecting...
+                    </span>
+                    
+                    <button id="fullscreen-btn" class="fullscreen-btn btn btn-dark btn-sm">
+                        <i class="bi bi-fullscreen"></i> Fullscreen
+                    </button>
+                    
+                    <div id="screen-frame" class="screen-frame">
+                        <div class="no-stream">
+                            <i class="bi bi-display" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3">Waiting for stream...</h4>
+                            <p>The device will start streaming when connected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Device Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Hostname:</strong> {{ device.hostname|default:"N/A" }}</p>
+                        <p><strong>IP Address:</strong> {{ device.ip_address|default:"N/A" }}</p>
+                        <p><strong>Operating System:</strong> {{ device.operating_system }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>CPU:</strong> {{ device.cpu_info|default:"N/A" }}</p>
+                        <p><strong>RAM:</strong> {{ device.ram_total|default:"N/A" }}</p>
+                        <p><strong>Screen Resolution:</strong> {{ device.screen_resolution|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        {% if can_send_messages %}
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-send"></i> Send Message</h5>
+            </div>
+            <div class="card-body">
+                <form id="message-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea id="message-input" class="form-control" rows="3" placeholder="Type your message..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-send"></i> Send
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Message History</h5>
+            </div>
+            <div class="card-body message-panel">
+                <div id="message-history">
+                    {% for msg in messages %}
+                    <div class="message-item">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong>{{ msg.sender.username }}</strong>
+                            <small class="text-muted">{{ msg.created_at|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1">{{ msg.message }}</p>
+                        {% if msg.delivered %}
+                        <small class="text-success"><i class="bi bi-check2-all"></i> Delivered</small>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted">No messages yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-tools"></i> Advanced Features</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-secondary w-100 mb-2" disabled>
+                    <i class="bi bi-mouse"></i> Remote Control
+                    <span class="badge bg-warning text-dark ms-2">Soon</span>
+                </button>
+                <button class="btn btn-outline-secondary w-100 mb-2" disabled>
+                    <i class="bi bi-file-earmark"></i> File Transfer
+                    <span class="badge bg-warning text-dark ms-2">Soon</span>
+                </button>
+                <button class="btn btn-outline-secondary w-100 mb-2" disabled>
+                    <i class="bi bi-record-circle"></i> Record Screen
+                    <span class="badge bg-warning text-dark ms-2">Soon</span>
+                </button>
+                <button class="btn btn-outline-secondary w-100" disabled>
+                    <i class="bi bi-terminal"></i> Remote Terminal
+                    <span class="badge bg-warning text-dark ms-2">Soon</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const deviceId = {{ device.id }};
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/monitor/${deviceId}/`;
+    let ws = null;
+    let reconnectInterval = null;
+    
+    function connect() {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = function() {
+            console.log('WebSocket connected');
+            updateConnectionStatus('online');
+            if (reconnectInterval) {
+                clearInterval(reconnectInterval);
+                reconnectInterval = null;
+            }
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'screen_frame') {
+                displayFrame(data.frame);
+            } else if (data.type === 'device_status') {
+                updateConnectionStatus(data.status);
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket disconnected');
+            updateConnectionStatus('offline');
+            
+            if (!reconnectInterval) {
+                reconnectInterval = setInterval(connect, 3000);
+            }
+        };
+        
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+    }
+    
+    function displayFrame(frameData) {
+        const screenFrame = document.getElementById('screen-frame');
+        screenFrame.innerHTML = `<img src="data:image/jpeg;base64,${frameData}" alt="Screen">`;
+    }
+    
+    function updateConnectionStatus(status) {
+        const statusEl = document.getElementById('connection-status');
+        if (status === 'online') {
+            statusEl.className = 'connection-status bg-success text-white';
+            statusEl.innerHTML = '<i class="bi bi-circle-fill"></i> Connected';
+        } else {
+            statusEl.className = 'connection-status bg-danger text-white';
+            statusEl.innerHTML = '<i class="bi bi-circle-fill"></i> Disconnected';
+        }
+    }
+    
+    // Send message
+    document.getElementById('message-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        
+        if (message) {
+            fetch('{% url "send_message" device.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `message=${encodeURIComponent(message)}`
+            }).then(() => {
+                messageInput.value = '';
+                location.reload();
+            });
+        }
+    });
+    
+    // Fullscreen
+    document.getElementById('fullscreen-btn').addEventListener('click', function() {
+        const container = document.querySelector('.monitor-container');
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        }
+    });
+    
+    // Connect on load
+    connect();
+</script>
+{% endblock %}

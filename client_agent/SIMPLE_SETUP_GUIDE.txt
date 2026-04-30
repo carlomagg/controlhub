@@ -1,0 +1,127 @@
+╔════════════════════════════════════════════════════════════╗
+║     ControlHub Live Agent - Simple Setup Guide            ║
+║     For Non-Technical Users                               ║
+╚════════════════════════════════════════════════════════════╝
+
+📋 WHAT YOU NEED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Device Token (get from your administrator)
+2. Server URL (get from your administrator)
+3. Python installed (download from python.org if needed)
+
+
+🚀 QUICK START (3 STEPS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Install
+───────────────
+Double-click: EASY_INSTALL.bat
+Wait for it to finish.
+
+
+STEP 2: Configure
+─────────────────
+When Notepad opens:
+1. Find: PASTE_TOKEN_HERE
+2. Replace with your actual token (paste it)
+3. Find: PASTE_SERVER_URL_HERE
+4. Replace with your server URL (the URL where your company 
+   hosts the app - NOT localhost)
+5. Press Ctrl+S to save
+6. Close Notepad
+
+⚠️  IMPORTANT: Use the actual company/hosted URL, NOT localhost!
+
+
+STEP 3: Start
+─────────────
+Double-click: START_AGENT.bat
+Keep the window open!
+
+
+✅ DONE! You're now being monitored.
+
+
+🛑 TO STOP MONITORING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Close the black window (Command Prompt)
+
+
+📝 EXAMPLE CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your administrator will give you:
+
+Device Token (looks like):
+xYz123AbC456DeF789GhI012JkL345MnO678PqR901StU234
+
+Server URL (looks like):
+ws://192.168.1.100:8000        (local network)
+or
+wss://controlhub.yourcompany.com  (internet/company domain)
+
+⚠️  DO NOT use ws://localhost:8000 - that only works on the 
+    server computer itself! Use the URL your admin gives you.
+
+
+🔧 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem: "Python is not recognized"
+Solution: Install Python from python.org
+         Make sure to check "Add Python to PATH"
+
+Problem: "Connection refused"
+Solution: Check with your administrator
+         Make sure server URL is correct
+
+Problem: "Invalid token"
+Solution: Copy the token again from administrator
+         Make sure no extra spaces
+
+Problem: Black window closes immediately
+Solution: Check agent_config.json
+         Make sure token and URL are correct
+
+
+❓ FREQUENTLY ASKED QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: What is being monitored?
+A: Your screen - everything you see on your monitor.
+
+Q: Can I stop it?
+A: Yes! Just close the black window.
+
+Q: Will it slow down my computer?
+A: No, it uses minimal resources.
+
+Q: Can I use my computer normally?
+A: Yes! You won't notice any difference.
+
+Q: Who can see my screen?
+A: Only administrators with access to the dashboard.
+
+Q: Does it work when computer is locked?
+A: No, the agent stops when you lock your computer.
+
+Q: Can I run it in the background?
+A: Yes, just minimize the window (don't close it).
+
+
+📞 NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Contact your system administrator or IT support.
+
+
+🔐 PRIVACY & SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Only authorized administrators can view your screen
+- The agent must be running for monitoring to work
+- You can stop monitoring anytime
+- Your device token is unique and secure
+
+
+═══════════════════════════════════════════════════════════════
+ControlHub Live - Professional Remote Monitoring
+═══════════════════════════════════════════════════════════════

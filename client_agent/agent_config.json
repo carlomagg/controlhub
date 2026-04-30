@@ -1,0 +1,9 @@
+{
+    "server_url": "ws://localhost:8000",
+    "device_token": "krK-bkF7h1jeurN1E9ba_25IVPUTmOdHbyz-q6AnJ5T3Txbs6tYb_VIRkrYm_71I",
+    "device_name": "My Computer",
+    "capture_interval": 0.5,
+    "jpeg_quality": 60,
+    "screen_width": 1280,
+    "reconnect_delay": 5
+}

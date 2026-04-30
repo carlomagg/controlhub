@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Devices - ControlHub Live{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-laptop"></i> Devices</h2>
+    <a href="{% url 'device_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Device
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ total_devices }}</h3>
+                <p class="mb-0">Total Devices</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ online_devices }}</h3>
+                <p class="mb-0">Online</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ offline_devices }}</h3>
+                <p class="mb-0">Offline</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Device Name</th>
+                        <th>Operating System</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>
+                            <strong>{{ device.device_name }}</strong>
+                            {% if device.hostname %}
+                            <br><small class="text-muted">{{ device.hostname }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ device.operating_system }}</td>
+                        <td>{{ device.ip_address|default:"N/A" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ device.status }}">
+                                <i class="bi bi-circle-fill"></i> {{ device.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ device.last_seen|timesince }} ago</td>
+                        <td>
+                            <a href="{% url 'device_detail' device.id %}" class="btn btn-sm btn-info">
+                                <i class="bi bi-info-circle"></i>
+                            </a>
+                            {% if device.status == 'online' %}
+                            <a href="{% url 'live_monitor' device.id %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'device_delete' device.id %}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-laptop" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">No devices yet</h5>
+                            <p>Add your first device to start monitoring</p>
+                            <a href="{% url 'device_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add Device
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

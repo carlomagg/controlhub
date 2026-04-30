@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - ControlHub Live{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2><i class="bi bi-display text-primary"></i></h2>
+                    <h3>ControlHub Live</h3>
+                    <p class="text-muted">Remote Monitoring Platform</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control form-control-lg" id="username" name="username" required autofocus>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </button>
+                </form>
+                
+                {% if form.errors %}
+                <div class="alert alert-danger mt-3">
+                    Invalid username or password.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center mt-3 text-muted">
+            <small>ControlHub Live v1.0 - Secure Remote Monitoring</small>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password visibility toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePasswordIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+</script>
+{% endblock %}
